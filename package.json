@@ -5,8 +5,8 @@
   "main": "backend/server.js",
   "type": "module",
   "scripts": {
-    "postinstall": "cd frontend/customer-app && npm install && cd ../admin-dashboard && npm install && cd ../../backend && npm install",
-    "build": "cd frontend/customer-app && npm run build && cd ../admin-dashboard && npm run build && mkdir -p frontend/customer-app/dist/admin && cp -r frontend/admin-dashboard/dist/* frontend/customer-app/dist/admin/",
+    "postinstall": "npm install --prefix frontend/customer-app && npm install --prefix frontend/admin-dashboard && npm install --prefix backend",
+    "build": "npm run build --prefix frontend/customer-app && npm run build --prefix frontend/admin-dashboard && mkdir -p frontend/customer-app/dist/admin && cp -r frontend/admin-dashboard/dist/* frontend/customer-app/dist/admin/",
     "start": "cd backend && node server.js",
     "dev": "node backend/server.js"
   },
