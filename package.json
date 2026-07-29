@@ -1,0 +1,16 @@
+{
+  "name": "chronobite-fullstack",
+  "version": "1.0.0",
+  "description": "ChronoBite Food Delivery Platform — Unified Full-Stack Application",
+  "main": "backend/server.js",
+  "type": "module",
+  "scripts": {
+    "postinstall": "cd frontend/customer-app && npm install && cd ../admin-dashboard && npm install && cd ../../backend && npm install",
+    "build": "cd frontend/customer-app && npm run build && cd ../admin-dashboard && npm run build",
+    "start": "cd backend && node server.js",
+    "dev": "node backend/server.js"
+  },
+  "keywords": ["food-delivery", "react", "express", "fullstack"],
+  "author": "ChronoBite Team",
+  "license": "MIT"
+}
