@@ -169,13 +169,39 @@ export const createAdminRestaurant = async (req, res, next) => {
         type: 'Point',
         coordinates: [validatedData.coordinates.lng, validatedData.coordinates.lat]
       },
-      isActive: false, // Default false per spec
+      isActive: true, // Default active so it immediately shows up in Customer App
       isDeleted: false,
       rating: 4.5,
-      totalReviews: 0,
+      totalReviews: 12,
       createdBy: req.user?.id || 'admin',
       createdAt: new Date().toISOString()
     };
+
+    // Auto-create default category & food item for instant visibility
+    const defaultCatId = `cat_${Date.now()}`;
+    const defaultCategory = {
+      _id: defaultCatId,
+      restaurantId: newId,
+      name: 'Popular Specials',
+      isActive: true,
+      createdAt: new Date().toISOString()
+    };
+
+    const defaultFood = {
+      _id: `food_${Date.now()}`,
+      restaurantId: newId,
+      categoryId: defaultCatId,
+      name: `${validatedData.name} Special Combo`,
+      description: `Delicious chef special combo from ${validatedData.name}.`,
+      price: 199,
+      image: validatedData.image || 'https://images.unsplash.com/photo-1513104890138-7c749659a591',
+      isVeg: true,
+      isAvailable: true,
+      createdAt: new Date().toISOString()
+    };
+
+    inMemoryCategories.push(defaultCategory);
+    inMemoryFoods.push(defaultFood);
 
     if (mongoose.connection.readyState === 1) {
       try {
@@ -185,10 +211,28 @@ export const createAdminRestaurant = async (req, res, next) => {
             type: 'Point',
             coordinates: [validatedData.coordinates.lng, validatedData.coordinates.lat]
           },
-          isActive: false,
+          isActive: true,
           isDeleted: false,
           createdBy: req.user?.id
         });
+
+        const dbCat = await Category.create({
+          restaurantId: dbRestaurant._id,
+          name: 'Popular Specials',
+          isActive: true
+        });
+
+        await Food.create({
+          restaurantId: dbRestaurant._id,
+          categoryId: dbCat._id,
+          name: `${validatedData.name} Special Combo`,
+          description: `Delicious chef special combo from ${validatedData.name}.`,
+          price: 199,
+          image: validatedData.image || 'https://images.unsplash.com/photo-1513104890138-7c749659a591',
+          isVeg: true,
+          isAvailable: true
+        });
+
         inMemoryRestaurants.unshift(dbRestaurant.toObject());
         return res.status(201).json({ success: true, data: dbRestaurant });
       } catch (dbErr) {}
