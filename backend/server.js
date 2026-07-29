@@ -93,9 +93,13 @@ const PORT = config.port;
 
 const startServer = async () => {
   await connectDB();
-  app.listen(PORT, () => {
-    console.log(`🚀 ChronoBite Unified Production Server running on http://localhost:${PORT}`);
-  });
+  if (process.env.VERCEL !== '1') {
+    app.listen(PORT, () => {
+      console.log(`🚀 ChronoBite Server running on http://localhost:${PORT}`);
+    });
+  }
 };
 
 startServer();
+
+export default app;
