@@ -20,7 +20,7 @@ const ProtectedRoute = ({ children }) => {
 
 export const App = () => {
   return (
-    <Router>
+    <Router basename="/admin">
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route

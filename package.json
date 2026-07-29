@@ -6,11 +6,16 @@
   "type": "module",
   "scripts": {
     "postinstall": "cd frontend/customer-app && npm install && cd ../admin-dashboard && npm install && cd ../../backend && npm install",
-    "build": "cd frontend/customer-app && npm run build && cd ../admin-dashboard && npm run build",
+    "build": "cd frontend/customer-app && npm run build && cd ../admin-dashboard && npm run build && mkdir -p frontend/customer-app/dist/admin && cp -r frontend/admin-dashboard/dist/* frontend/customer-app/dist/admin/",
     "start": "cd backend && node server.js",
     "dev": "node backend/server.js"
   },
-  "keywords": ["food-delivery", "react", "express", "fullstack"],
+  "keywords": [
+    "food-delivery",
+    "react",
+    "express",
+    "fullstack"
+  ],
   "author": "ChronoBite Team",
   "license": "MIT"
 }
