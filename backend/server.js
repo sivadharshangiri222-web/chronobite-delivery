@@ -94,25 +94,27 @@ if (customerDist) {
   app.use(express.static(customerDist));
 }
 
-// Route Fallbacks for Single Page Applications (SPA)
-app.get('/admin*', (req, res) => {
+// Route Fallbacks for Single Page Applications (SPA) — Express 5 Compatible
+app.use('/admin', (req, res, next) => {
+  if (req.method !== 'GET') return next();
   if (adminDist && fs.existsSync(path.join(adminDist, 'index.html'))) {
     return res.sendFile(path.join(adminDist, 'index.html'));
   }
   if (customerDist && fs.existsSync(path.join(customerDist, 'admin/index.html'))) {
     return res.sendFile(path.join(customerDist, 'admin/index.html'));
   }
-  res.status(404).json({ message: 'Admin portal build not found' });
+  next();
 });
 
-app.get('*', (req, res) => {
+app.use((req, res, next) => {
+  if (req.method !== 'GET') return next();
   if (req.path.startsWith('/api') || req.path.startsWith('/invoices')) {
     return res.status(404).json({ message: 'API Route Not Found', code: 'NOT_FOUND' });
   }
   if (customerDist && fs.existsSync(path.join(customerDist, 'index.html'))) {
     return res.sendFile(path.join(customerDist, 'index.html'));
   }
-  res.status(404).send('ChronoBite Application build not found');
+  next();
 });
 
 // Global Error Handler
