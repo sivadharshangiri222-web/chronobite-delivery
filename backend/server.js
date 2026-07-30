@@ -68,22 +68,33 @@ app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'ChronoBite API Server is healthy' });
 });
 
-// Single Unified Web App Production Build Serving
-const customerDist = path.join(__dirname, '../frontend/customer-app/dist');
-const adminDist = path.join(__dirname, '../frontend/admin-dashboard/dist');
+// Single Unified Web App Production Build Serving with Multi-Path Discovery
+const customerDist = [
+  path.join(__dirname, '../frontend/customer-app/dist'),
+  path.join(process.cwd(), 'frontend/customer-app/dist'),
+  path.join(process.cwd(), '../frontend/customer-app/dist')
+].find((p) => fs.existsSync(p));
 
-if (fs.existsSync(adminDist)) {
+const adminDist = [
+  path.join(__dirname, '../frontend/admin-dashboard/dist'),
+  path.join(process.cwd(), 'frontend/admin-dashboard/dist'),
+  path.join(process.cwd(), '../frontend/admin-dashboard/dist')
+].find((p) => fs.existsSync(p));
+
+if (adminDist) {
   app.use('/admin', express.static(adminDist));
   app.get(/^\/admin\/.*/, (req, res) => {
     res.sendFile(path.join(adminDist, 'index.html'));
   });
 }
 
-if (fs.existsSync(customerDist)) {
+if (customerDist) {
   app.use(express.static(customerDist));
   app.get(/^(?!\/api|\/invoices).*/, (req, res) => {
     res.sendFile(path.join(customerDist, 'index.html'));
   });
+} else {
+  console.warn('⚠️ customerDist static directory not found. Please ensure `npm run build` has run.');
 }
 
 // Global Error Handler
