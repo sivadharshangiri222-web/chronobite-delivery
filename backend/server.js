@@ -68,58 +68,51 @@ app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'ChronoBite API Server is healthy' });
 });
 
-// Dynamic Multi-Path Static File Resolution Middleware
-const findDist = (subpath) => {
-  const candidates = [
-    path.join(__dirname, subpath),
-    path.join(process.cwd(), subpath.replace('../', '')),
-    path.join(process.cwd(), subpath),
-    path.resolve(__dirname, subpath)
-  ];
-  return candidates.find((p) => fs.existsSync(p));
-};
+// Single Unified Web App Production Build Serving
+const customerDist = [
+  path.join(__dirname, '../frontend/customer-app/dist'),
+  path.join(process.cwd(), 'frontend/customer-app/dist'),
+  path.join(process.cwd(), '../frontend/customer-app/dist'),
+  path.resolve(__dirname, '../frontend/customer-app/dist')
+].find((p) => fs.existsSync(p));
 
-// Admin Dashboard Static Middleware
-app.use('/admin', (req, res, next) => {
-  const adminPath = findDist('../frontend/admin-dashboard/dist') || findDist('../frontend/customer-app/dist/admin');
-  if (adminPath) {
-    return express.static(adminPath)(req, res, next);
+const adminDist = [
+  path.join(__dirname, '../frontend/admin-dashboard/dist'),
+  path.join(process.cwd(), 'frontend/admin-dashboard/dist'),
+  path.join(process.cwd(), '../frontend/admin-dashboard/dist'),
+  path.resolve(__dirname, '../frontend/admin-dashboard/dist')
+].find((p) => fs.existsSync(p));
+
+console.log('📦 Resolved Customer App Static Directory:', customerDist || 'NOT FOUND');
+console.log('📦 Resolved Admin Dashboard Static Directory:', adminDist || 'NOT FOUND');
+
+if (adminDist) {
+  app.use('/admin', express.static(adminDist));
+}
+
+if (customerDist) {
+  app.use(express.static(customerDist));
+}
+
+// Route Fallbacks for Single Page Applications (SPA)
+app.get('/admin*', (req, res) => {
+  if (adminDist && fs.existsSync(path.join(adminDist, 'index.html'))) {
+    return res.sendFile(path.join(adminDist, 'index.html'));
   }
-  next();
+  if (customerDist && fs.existsSync(path.join(customerDist, 'admin/index.html'))) {
+    return res.sendFile(path.join(customerDist, 'admin/index.html'));
+  }
+  res.status(404).json({ message: 'Admin portal build not found' });
 });
 
-app.get(/^\/admin\/.*/, (req, res, next) => {
-  const adminPath = findDist('../frontend/admin-dashboard/dist') || findDist('../frontend/customer-app/dist/admin');
-  if (adminPath) {
-    const indexPath = path.join(adminPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      return res.sendFile(indexPath);
-    }
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/invoices')) {
+    return res.status(404).json({ message: 'API Route Not Found', code: 'NOT_FOUND' });
   }
-  next();
-});
-
-// Customer App Static Middleware
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api') || req.path.startsWith('/invoices') || req.path.startsWith('/admin')) {
-    return next();
+  if (customerDist && fs.existsSync(path.join(customerDist, 'index.html'))) {
+    return res.sendFile(path.join(customerDist, 'index.html'));
   }
-  const customerPath = findDist('../frontend/customer-app/dist');
-  if (customerPath) {
-    return express.static(customerPath)(req, res, next);
-  }
-  next();
-});
-
-app.get(/^(?!\/api|\/invoices|\/admin).*/, (req, res, next) => {
-  const customerPath = findDist('../frontend/customer-app/dist');
-  if (customerPath) {
-    const indexPath = path.join(customerPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      return res.sendFile(indexPath);
-    }
-  }
-  res.status(404).send('ChronoBite Application is starting up. Please refresh in a moment.');
+  res.status(404).send('ChronoBite Application build not found');
 });
 
 // Global Error Handler
