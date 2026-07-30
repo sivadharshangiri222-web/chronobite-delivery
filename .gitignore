@@ -8,7 +8,10 @@ frontend/admin-dashboard/node_modules/
 # Environment files
 .env
 .env.local
-.env.*
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
 
 # Build outputs & dist directories
 dist/
