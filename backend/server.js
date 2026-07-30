@@ -68,34 +68,59 @@ app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'ChronoBite API Server is healthy' });
 });
 
-// Single Unified Web App Production Build Serving with Multi-Path Discovery
-const customerDist = [
-  path.join(__dirname, '../frontend/customer-app/dist'),
-  path.join(process.cwd(), 'frontend/customer-app/dist'),
-  path.join(process.cwd(), '../frontend/customer-app/dist')
-].find((p) => fs.existsSync(p));
+// Dynamic Multi-Path Static File Resolution Middleware
+const findDist = (subpath) => {
+  const candidates = [
+    path.join(__dirname, subpath),
+    path.join(process.cwd(), subpath.replace('../', '')),
+    path.join(process.cwd(), subpath),
+    path.resolve(__dirname, subpath)
+  ];
+  return candidates.find((p) => fs.existsSync(p));
+};
 
-const adminDist = [
-  path.join(__dirname, '../frontend/admin-dashboard/dist'),
-  path.join(process.cwd(), 'frontend/admin-dashboard/dist'),
-  path.join(process.cwd(), '../frontend/admin-dashboard/dist')
-].find((p) => fs.existsSync(p));
+// Admin Dashboard Static Middleware
+app.use('/admin', (req, res, next) => {
+  const adminPath = findDist('../frontend/admin-dashboard/dist') || findDist('../frontend/customer-app/dist/admin');
+  if (adminPath) {
+    return express.static(adminPath)(req, res, next);
+  }
+  next();
+});
 
-if (adminDist) {
-  app.use('/admin', express.static(adminDist));
-  app.get(/^\/admin\/.*/, (req, res) => {
-    res.sendFile(path.join(adminDist, 'index.html'));
-  });
-}
+app.get(/^\/admin\/.*/, (req, res, next) => {
+  const adminPath = findDist('../frontend/admin-dashboard/dist') || findDist('../frontend/customer-app/dist/admin');
+  if (adminPath) {
+    const indexPath = path.join(adminPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
+  }
+  next();
+});
 
-if (customerDist) {
-  app.use(express.static(customerDist));
-  app.get(/^(?!\/api|\/invoices).*/, (req, res) => {
-    res.sendFile(path.join(customerDist, 'index.html'));
-  });
-} else {
-  console.warn('⚠️ customerDist static directory not found. Please ensure `npm run build` has run.');
-}
+// Customer App Static Middleware
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/invoices') || req.path.startsWith('/admin')) {
+    return next();
+  }
+  const customerPath = findDist('../frontend/customer-app/dist');
+  if (customerPath) {
+    return express.static(customerPath)(req, res, next);
+  }
+  next();
+});
+
+app.get(/^(?!\/api|\/invoices|\/admin).*/, (req, res, next) => {
+  const customerPath = findDist('../frontend/customer-app/dist');
+  if (customerPath) {
+    const indexPath = path.join(customerPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
+  }
+  res.status(404).send('ChronoBite Application is starting up. Please refresh in a moment.');
+});
 
 // Global Error Handler
 app.use(errorHandler);
