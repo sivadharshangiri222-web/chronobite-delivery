@@ -13,10 +13,7 @@ frontend/admin-dashboard/node_modules/
 .env.production.local
 !.env.example
 
-# Build outputs & dist directories
-dist/
-**/dist/
-build/
+# Cache & system temp files
 .cache/
 .system_generated/
 
