@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'r
 import { AnimatePresence, motion } from 'framer-motion';
 import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
+import ChronoBot from './components/ChronoBot';
 import Home from './pages/Home';
 import Restaurants from './pages/Restaurants';
 import RestaurantDetails from './pages/RestaurantDetails';
@@ -68,6 +69,7 @@ const Layout = () => {
         <AnimatedRoutes />
       </main>
       {!isImmersiveScreen && <BottomNav />}
+      {!isImmersiveScreen && <ChronoBot />}
     </div>
   );
 };
